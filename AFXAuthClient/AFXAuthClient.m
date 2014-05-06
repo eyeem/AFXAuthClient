@@ -217,12 +217,12 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
 
     NSMutableURLRequest *request = [self requestWithMethod:accessMethod path:accessTokenPath parameters:parameters];
 
-    AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *operation, id responseObject) {
+    AFHTTPRequestOperation *operation = [self HTTPRequestOperationWithRequest:request success:^(AFHTTPRequestOperation *successOperation, id responseObject) {
         NSString *queryString = [[NSString alloc] initWithData:responseObject encoding:NSUTF8StringEncoding];
         _token = [[AFXAuthToken alloc] initWithQueryString:queryString];
         if (success)
             success(_token);
-    } failure:^(AFHTTPRequestOperation *operation, NSError *error) {
+    } failure:^(AFHTTPRequestOperation *failureOperation, NSError *error) {
         if (failure)
             failure(error);
     }];
