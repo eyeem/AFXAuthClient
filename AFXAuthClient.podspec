@@ -2,10 +2,10 @@ Pod::Spec.new do |s|
   s.name         = 'AFXAuthClient'
   s.version      = '1.1'
   s.summary      = 'AFNetworking Extension for XAuth Authentication.'
-  s.homepage     = 'https://github.com/romaonthego/AFXAuthClient'
+  s.homepage     = 'https://github.com/eyeem/AFXAuthClient'
   s.license      = { :type => "MIT", :file => "LICENSE" }
   s.authors      = { 'Roman Efimov' => 'romefimov@gmail.com', 'Mattt Thompson' => 'm@mattt.me', 'Eric Johnson' => 'eric@semisecretsoftware.com' }
-  s.source       = { :git => 'https://github.com/romaonthego/AFXAuthClient.git', :tag => '1.1'}
+  s.source       = { :git => 'https://github.com/eyeem/AFXAuthClient.git', :tag => '1.1'}
   s.source_files = 'AFXAuthClient'
   s.requires_arc = true
 
@@ -14,7 +14,8 @@ Pod::Spec.new do |s|
 
   s.osx.deployment_target = '10.7'
 
-  s.dependency 'AFNetworking', '~> 1.3'
+  s.dependency 'AFNetworking', '~> 2.0'
+  s.dependency 'NSURL+QueryDictionary', '~>1.1.0'
   s.prefix_header_contents = <<-EOS
 #import <Availability.h>
 
