@@ -31,10 +31,13 @@
 #import "AFHTTPRequestOperation.h"
 
 #import <CommonCrypto/CommonHMAC.h>
+#import <NSURL+QueryDictionary.h>
 
 NSString *const AFXAuthModeClient = @"client_auth";
 NSString *const AFXAuthModeAnon = @"anon_auth";
 NSString *const AFXAuthModeReverse = @"reverse_auth";
+
+
 
 static NSString * AFEncodeBase64WithData(NSData *data)
 {
@@ -138,6 +141,7 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
     if (self) {
         _consumerKey = key;
         _consumerSecret = secret;
+		self.responseSerializer = [AFHTTPResponseSerializer serializer];
     }
     return self;
 }
@@ -180,7 +184,7 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
         return nil;
     }
 
-    NSArray *sortedComponents = [[AFQueryStringFromParametersWithEncoding(parameters, self.stringEncoding) componentsSeparatedByString:@"&"] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    NSArray *sortedComponents = [[[parameters uq_URLQueryString] componentsSeparatedByString:@"&"] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     NSMutableArray *mutableComponents = [NSMutableArray array];
     for (NSString *component in sortedComponents) {
         NSArray *subcomponents = [component componentsSeparatedByString:@"="];
@@ -227,7 +231,7 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
             failure(error);
     }];
 
-    [self enqueueHTTPRequestOperation:operation];
+    [self.operationQueue addOperation:operation];
 }
 
 - (NSMutableDictionary *)authorizationHeaderWithRequest:(NSURLRequest *)request parameters:(NSDictionary *)parameters
@@ -253,26 +257,38 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
     _nonce = [NSString stringWithFormat:@"%d", arc4random()];
     _timestamp = [NSString stringWithFormat:@"%d", (int)ceil((float)[[NSDate date] timeIntervalSince1970])];
 
-    NSMutableURLRequest *request = [super requestWithMethod:method path:path parameters:parameters];
+	NSMutableURLRequest *request = [self.requestSerializer requestWithMethod:method URLString:[[NSURL URLWithString:path relativeToURL:self.baseURL] absoluteString] parameters:parameters error:NULL];
     NSMutableDictionary *authorizationHeader = [self authorizationHeaderWithRequest:request parameters:parameters];
 
     [request setValue:[self authorizationHeaderForParameters:authorizationHeader] forHTTPHeaderField:@"Authorization"];
     [request setHTTPShouldHandleCookies:NO];
     return request;
 }
+
 
 - (NSMutableURLRequest *)multipartFormRequestWithMethod:(NSString *)method path:(NSString *)path parameters:(NSDictionary *)parameters constructingBodyWithBlock:(void (^)(id<AFMultipartFormData>))block
 {
     _nonce = [NSString stringWithFormat:@"%d", arc4random()];
     _timestamp = [NSString stringWithFormat:@"%d", (int)ceil((float)[[NSDate date] timeIntervalSince1970])];
 
-    NSMutableURLRequest *request = [super multipartFormRequestWithMethod:method path:path parameters:parameters constructingBodyWithBlock:block];
+    NSMutableURLRequest *request = [self.requestSerializer multipartFormRequestWithMethod:method
+																					 URLString:path
+																			   parameters:parameters
+																constructingBodyWithBlock:block
+																					error:NULL];
     NSMutableDictionary *authorizationHeader = [self authorizationHeaderWithRequest:request parameters:parameters];
 
     [request setValue:[self authorizationHeaderForParameters:authorizationHeader] forHTTPHeaderField:@"Authorization"];
     [request setHTTPShouldHandleCookies:NO];
     return request;
 }
+
+
+- (void)enqueueHTTPRequestOperation:(AFHTTPRequestOperation *)operation
+{
+	[self.operationQueue addOperation:operation];
+}
+
 
 @end
 
@@ -321,6 +337,7 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
     [coder encodeObject:self.key forKey:@"AFXAuthClientKey"];
     [coder encodeObject:self.secret forKey:@"AFXAuthClientSecret"];
 }
+
 
 - (id)initWithCoder:(NSCoder *)coder
 {

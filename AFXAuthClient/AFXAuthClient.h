@@ -27,7 +27,7 @@
 // THE SOFTWARE.
 //
 
-#import "AFHTTPClient.h"
+#import <AFNetworking/AFNetworking.h>
 
 @class AFXAuthToken;
 
@@ -35,7 +35,7 @@ extern NSString *const AFXAuthModeClient;
 extern NSString *const AFXAuthModeAnon;
 extern NSString *const AFXAuthModeReverse;
 
-@interface AFXAuthClient : AFHTTPClient {
+@interface AFXAuthClient : AFHTTPRequestOperationManager {
     NSString *_nonce;
     NSString *_timestamp;
 }
@@ -85,6 +85,14 @@ extern NSString *const AFXAuthModeReverse;
                                        failure:(void (^)(NSError *error))failure;
 
 
+
+
+#pragma mark - Compatibility with AFNetworking 2.x
+
+- (void)enqueueHTTPRequestOperation:(AFHTTPRequestOperation *)operation;
+
+- (NSMutableURLRequest *)requestWithMethod:(NSString *)method path:(NSString *)path parameters:(NSDictionary *)parameters;
+
 @end
 
 #pragma mark -
@@ -127,6 +135,5 @@ extern NSString *const AFXAuthModeReverse;
  
  */
 - (id)initWithCoder:(NSCoder *)coder;
-
 
 @end
