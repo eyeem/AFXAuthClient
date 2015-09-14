@@ -31,7 +31,6 @@
 #import "AFHTTPRequestOperation.h"
 
 #import <CommonCrypto/CommonHMAC.h>
-#import <NSURL+QueryDictionary.h>
 
 NSString *const AFXAuthModeClient = @"client_auth";
 NSString *const AFXAuthModeAnon = @"anon_auth";
@@ -184,12 +183,12 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
         return nil;
     }
 
-    NSArray *sortedComponents = [[[parameters uq_URLQueryString] componentsSeparatedByString:@"&"] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     NSMutableArray *mutableComponents = [NSMutableArray array];
-    for (NSString *component in sortedComponents) {
-        NSArray *subcomponents = [component componentsSeparatedByString:@"="];
-        [mutableComponents addObject:[NSString stringWithFormat:@"%@=\"%@\"", [subcomponents objectAtIndex:0], [subcomponents objectAtIndex:1]]];
-    }
+    [[parameters keysSortedByValueUsingSelector:@selector(caseInsensitiveCompare:)]
+     enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop)
+    {
+        [mutableComponents addObject:[NSString stringWithFormat:@"%@=\"%@\"", key, parameters[key]]];
+    }];
 
     return [NSString stringWithFormat:kAFOAuth1AuthorizationFormatString, [mutableComponents componentsJoinedByString:@", "]];
 }
