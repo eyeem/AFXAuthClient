@@ -81,6 +81,17 @@ static NSString * RFC3986EscapedStringWithEncoding(NSString *string, NSStringEnc
 	return (__bridge_transfer  NSString *)CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (__bridge CFStringRef)string, (__bridge CFStringRef)kAFCharactersToLeaveUnescaped, (__bridge CFStringRef)kAFCharactersToBeEscaped, CFStringConvertNSStringEncodingToEncoding(encoding));
 }
 
+static NSDictionary *RFC3986EscapedDictionary(NSDictionary *dictionary) {
+	NSMutableDictionary *mutableDictionary = [NSMutableDictionary dictionary];
+
+	NSStringEncoding defaultEncoding = NSUTF8StringEncoding;
+	[dictionary enumerateKeysAndObjectsUsingBlock:^(id  _Nonnull key, id  _Nonnull obj, BOOL * _Nonnull stop) {
+		mutableDictionary[RFC3986EscapedStringWithEncoding(key, defaultEncoding)] = RFC3986EscapedStringWithEncoding(obj, defaultEncoding);
+	}];
+
+	return [mutableDictionary copy];
+}
+
 static NSDictionary * AFParametersFromQueryString(NSString *queryString)
 {
     NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
@@ -183,11 +194,13 @@ static inline NSString * AFHMACSHA1Signature(NSString *baseString, NSString *con
         return nil;
     }
 
-    NSMutableArray *mutableComponents = [NSMutableArray array];
-    [[parameters keysSortedByValueUsingSelector:@selector(caseInsensitiveCompare:)]
+	NSDictionary *encodedParameters = RFC3986EscapedDictionary(parameters);
+
+	NSMutableArray *mutableComponents = [NSMutableArray array];
+    [[encodedParameters keysSortedByValueUsingSelector:@selector(caseInsensitiveCompare:)]
      enumerateObjectsUsingBlock:^(NSString *key, NSUInteger idx, BOOL *stop)
     {
-        [mutableComponents addObject:[NSString stringWithFormat:@"%@=\"%@\"", key, parameters[key]]];
+        [mutableComponents addObject:[NSString stringWithFormat:@"%@=\"%@\"", key, encodedParameters[key]]];
     }];
 
     return [NSString stringWithFormat:kAFOAuth1AuthorizationFormatString, [mutableComponents componentsJoinedByString:@", "]];
